@@ -23,6 +23,7 @@ class RateLimitedSession(requests.Session):
     def __init__(self, qps):
         super().__init__()
         self.qps = qps
+        self.interval = 1 / qps #calculate the time interval between each request based on the QPS (queries per second)
         self.last_request_time = time.time()
 
     def send(self, *args, **kwargs):
@@ -32,13 +33,14 @@ class RateLimitedSession(requests.Session):
         #Calculate time since last request
         elapsed_time = time.time() - self.last_request_time
 
-        interval = 1 / self.qps #calculate the time interval between each request based on the QPS (queries per second)
-        if elapsed_time < interval:
-            time.sleep(interval - elapsed_time) #If elapsed time is less than the desired interval, sleep to maintain QPS
+        if elapsed_time < self.interval:
+            time.sleep(self.interval - elapsed_time) #If elapsed time is less than the desired interval, sleep to maintain QPS
 
-        #Make the request and update last_request_time
-        response = super().send(*args, **kwargs)
+        #BUG FIX: Now I update last_request_time to the time before making the request
         self.last_request_time = time.time()
+
+        #Make the request and return the response
+        response = super().send(*args, **kwargs)
         return response
     
 class LoadTester:
