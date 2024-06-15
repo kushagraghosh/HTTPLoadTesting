@@ -30,8 +30,9 @@ class RateLimitedSession(requests.Session):
         '''
         Override the send() method of requests.Session to introduce a delay between requests. The delay ensures that the rate of requests matches the desired QPS (queries per second).
         '''
+        current = time.time()
         #Calculate time since last request
-        elapsed_time = time.time() - self.last_request_time
+        elapsed_time = current - self.last_request_time
 
         if elapsed_time < self.interval:
             time.sleep(self.interval - elapsed_time) #If elapsed time is less than the desired interval, sleep to maintain QPS
